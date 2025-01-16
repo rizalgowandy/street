@@ -13,12 +13,274 @@ import (
 	"github.com/kokizzu/gotro/X"
 )
 
-// Sessions DAO reader/query struct
+// Feedbacks DAO reader/query struct
 //
 //go:generate gomodifytags -all -add-tags json,form,query,long,msg -transform camelcase --skip-unexported -w -file rqAuth__ORM.GEN.go
 //go:generate replacer -afterprefix "Id\" form" "Id,string\" form" type rqAuth__ORM.GEN.go
 //go:generate replacer -afterprefix "json:\"id\"" "json:\"id,string\"" type rqAuth__ORM.GEN.go
 //go:generate replacer -afterprefix "By\" form" "By,string\" form" type rqAuth__ORM.GEN.go
+type Feedbacks struct {
+	Adapter     *Tt.Adapter `json:"-" msg:"-" query:"-" form:"-" long:"adapter"`
+	Id          uint64      `json:"id,string" form:"id" query:"id" long:"id" msg:"id"`
+	CreatedBy   uint64      `json:"createdBy,string" form:"createdBy" query:"createdBy" long:"createdBy" msg:"createdBy"`
+	CreatedAt   int64       `json:"createdAt" form:"createdAt" query:"createdAt" long:"createdAt" msg:"createdAt"`
+	UpdatedBy   uint64      `json:"updatedBy,string" form:"updatedBy" query:"updatedBy" long:"updatedBy" msg:"updatedBy"`
+	UpdatedAt   int64       `json:"updatedAt" form:"updatedAt" query:"updatedAt" long:"updatedAt" msg:"updatedAt"`
+	DeletedAt   int64       `json:"deletedAt" form:"deletedAt" query:"deletedAt" long:"deletedAt" msg:"deletedAt"`
+	UserMessage string      `json:"userMessage" form:"userMessage" query:"userMessage" long:"userMessage" msg:"userMessage"`
+	AdminReply  string      `json:"adminReply" form:"adminReply" query:"adminReply" long:"adminReply" msg:"adminReply"`
+}
+
+// NewFeedbacks create new ORM reader/query object
+func NewFeedbacks(adapter *Tt.Adapter) *Feedbacks {
+	return &Feedbacks{Adapter: adapter}
+}
+
+// SpaceName returns full package and table name
+func (f *Feedbacks) SpaceName() string { //nolint:dupl false positive
+	return string(mAuth.TableFeedbacks) // casting required to string from Tt.TableName
+}
+
+// SqlTableName returns quoted table name
+func (f *Feedbacks) SqlTableName() string { //nolint:dupl false positive
+	return `"feedbacks"`
+}
+
+func (f *Feedbacks) UniqueIndexId() string { //nolint:dupl false positive
+	return `id`
+}
+
+// FindById Find one by Id
+func (f *Feedbacks) FindById() bool { //nolint:dupl false positive
+	res, err := f.Adapter.Select(f.SpaceName(), f.UniqueIndexId(), 0, 1, tarantool.IterEq, A.X{f.Id})
+	if L.IsError(err, `Feedbacks.FindById failed: `+f.SpaceName()) {
+		return false
+	}
+	rows := res.Tuples()
+	if len(rows) == 1 {
+		f.FromArray(rows[0])
+		return true
+	}
+	return false
+}
+
+// SqlSelectAllFields generate Sql select fields
+func (f *Feedbacks) SqlSelectAllFields() string { //nolint:dupl false positive
+	return ` "id"
+	, "createdBy"
+	, "createdAt"
+	, "updatedBy"
+	, "updatedAt"
+	, "deletedAt"
+	, "userMessage"
+	, "adminReply"
+	`
+}
+
+// SqlSelectAllUncensoredFields generate Sql select fields
+func (f *Feedbacks) SqlSelectAllUncensoredFields() string { //nolint:dupl false positive
+	return ` "id"
+	, "createdBy"
+	, "createdAt"
+	, "updatedBy"
+	, "updatedAt"
+	, "deletedAt"
+	, "userMessage"
+	, "adminReply"
+	`
+}
+
+// ToUpdateArray generate slice of update command
+func (f *Feedbacks) ToUpdateArray() A.X { //nolint:dupl false positive
+	return A.X{
+		A.X{`=`, 0, f.Id},
+		A.X{`=`, 1, f.CreatedBy},
+		A.X{`=`, 2, f.CreatedAt},
+		A.X{`=`, 3, f.UpdatedBy},
+		A.X{`=`, 4, f.UpdatedAt},
+		A.X{`=`, 5, f.DeletedAt},
+		A.X{`=`, 6, f.UserMessage},
+		A.X{`=`, 7, f.AdminReply},
+	}
+}
+
+// IdxId return name of the index
+func (f *Feedbacks) IdxId() int { //nolint:dupl false positive
+	return 0
+}
+
+// SqlId return name of the column being indexed
+func (f *Feedbacks) SqlId() string { //nolint:dupl false positive
+	return `"id"`
+}
+
+// IdxCreatedBy return name of the index
+func (f *Feedbacks) IdxCreatedBy() int { //nolint:dupl false positive
+	return 1
+}
+
+// SqlCreatedBy return name of the column being indexed
+func (f *Feedbacks) SqlCreatedBy() string { //nolint:dupl false positive
+	return `"createdBy"`
+}
+
+// IdxCreatedAt return name of the index
+func (f *Feedbacks) IdxCreatedAt() int { //nolint:dupl false positive
+	return 2
+}
+
+// SqlCreatedAt return name of the column being indexed
+func (f *Feedbacks) SqlCreatedAt() string { //nolint:dupl false positive
+	return `"createdAt"`
+}
+
+// IdxUpdatedBy return name of the index
+func (f *Feedbacks) IdxUpdatedBy() int { //nolint:dupl false positive
+	return 3
+}
+
+// SqlUpdatedBy return name of the column being indexed
+func (f *Feedbacks) SqlUpdatedBy() string { //nolint:dupl false positive
+	return `"updatedBy"`
+}
+
+// IdxUpdatedAt return name of the index
+func (f *Feedbacks) IdxUpdatedAt() int { //nolint:dupl false positive
+	return 4
+}
+
+// SqlUpdatedAt return name of the column being indexed
+func (f *Feedbacks) SqlUpdatedAt() string { //nolint:dupl false positive
+	return `"updatedAt"`
+}
+
+// IdxDeletedAt return name of the index
+func (f *Feedbacks) IdxDeletedAt() int { //nolint:dupl false positive
+	return 5
+}
+
+// SqlDeletedAt return name of the column being indexed
+func (f *Feedbacks) SqlDeletedAt() string { //nolint:dupl false positive
+	return `"deletedAt"`
+}
+
+// IdxUserMessage return name of the index
+func (f *Feedbacks) IdxUserMessage() int { //nolint:dupl false positive
+	return 6
+}
+
+// SqlUserMessage return name of the column being indexed
+func (f *Feedbacks) SqlUserMessage() string { //nolint:dupl false positive
+	return `"userMessage"`
+}
+
+// IdxAdminReply return name of the index
+func (f *Feedbacks) IdxAdminReply() int { //nolint:dupl false positive
+	return 7
+}
+
+// SqlAdminReply return name of the column being indexed
+func (f *Feedbacks) SqlAdminReply() string { //nolint:dupl false positive
+	return `"adminReply"`
+}
+
+// ToArray receiver fields to slice
+func (f *Feedbacks) ToArray() A.X { //nolint:dupl false positive
+	var id any = nil
+	if f.Id != 0 {
+		id = f.Id
+	}
+	return A.X{
+		id,
+		f.CreatedBy,   // 1
+		f.CreatedAt,   // 2
+		f.UpdatedBy,   // 3
+		f.UpdatedAt,   // 4
+		f.DeletedAt,   // 5
+		f.UserMessage, // 6
+		f.AdminReply,  // 7
+	}
+}
+
+// FromArray convert slice to receiver fields
+func (f *Feedbacks) FromArray(a A.X) *Feedbacks { //nolint:dupl false positive
+	f.Id = X.ToU(a[0])
+	f.CreatedBy = X.ToU(a[1])
+	f.CreatedAt = X.ToI(a[2])
+	f.UpdatedBy = X.ToU(a[3])
+	f.UpdatedAt = X.ToI(a[4])
+	f.DeletedAt = X.ToI(a[5])
+	f.UserMessage = X.ToS(a[6])
+	f.AdminReply = X.ToS(a[7])
+	return f
+}
+
+// FromUncensoredArray convert slice to receiver fields
+func (f *Feedbacks) FromUncensoredArray(a A.X) *Feedbacks { //nolint:dupl false positive
+	f.Id = X.ToU(a[0])
+	f.CreatedBy = X.ToU(a[1])
+	f.CreatedAt = X.ToI(a[2])
+	f.UpdatedBy = X.ToU(a[3])
+	f.UpdatedAt = X.ToI(a[4])
+	f.DeletedAt = X.ToI(a[5])
+	f.UserMessage = X.ToS(a[6])
+	f.AdminReply = X.ToS(a[7])
+	return f
+}
+
+// FindOffsetLimit returns slice of struct, order by idx, eg. .UniqueIndex*()
+func (f *Feedbacks) FindOffsetLimit(offset, limit uint32, idx string) []Feedbacks { //nolint:dupl false positive
+	var rows []Feedbacks
+	res, err := f.Adapter.Select(f.SpaceName(), idx, offset, limit, tarantool.IterAll, A.X{})
+	if L.IsError(err, `Feedbacks.FindOffsetLimit failed: `+f.SpaceName()) {
+		return rows
+	}
+	for _, row := range res.Tuples() {
+		item := Feedbacks{}
+		rows = append(rows, *item.FromArray(row))
+	}
+	return rows
+}
+
+// FindArrOffsetLimit returns as slice of slice order by idx eg. .UniqueIndex*()
+func (f *Feedbacks) FindArrOffsetLimit(offset, limit uint32, idx string) ([]A.X, Tt.QueryMeta) { //nolint:dupl false positive
+	var rows []A.X
+	res, err := f.Adapter.Select(f.SpaceName(), idx, offset, limit, tarantool.IterAll, A.X{})
+	if L.IsError(err, `Feedbacks.FindOffsetLimit failed: `+f.SpaceName()) {
+		return rows, Tt.QueryMetaFrom(res, err)
+	}
+	tuples := res.Tuples()
+	rows = make([]A.X, len(tuples))
+	for z, row := range tuples {
+		rows[z] = row
+	}
+	return rows, Tt.QueryMetaFrom(res, nil)
+}
+
+// Total count number of rows
+func (f *Feedbacks) Total() int64 { //nolint:dupl false positive
+	rows := f.Adapter.CallBoxSpace(f.SpaceName()+`:count`, A.X{})
+	if len(rows) > 0 && len(rows[0]) > 0 {
+		return X.ToI(rows[0][0])
+	}
+	return 0
+}
+
+// FeedbacksFieldTypeMap returns key value of field name and key
+var FeedbacksFieldTypeMap = map[string]Tt.DataType{ //nolint:dupl false positive
+	`id`:          Tt.Unsigned,
+	`createdBy`:   Tt.Unsigned,
+	`createdAt`:   Tt.Integer,
+	`updatedBy`:   Tt.Unsigned,
+	`updatedAt`:   Tt.Integer,
+	`deletedAt`:   Tt.Integer,
+	`userMessage`: Tt.String,
+	`adminReply`:  Tt.String,
+}
+
+// DO NOT EDIT, will be overwritten by github.com/kokizzu/D/Tt/tarantool_orm_generator.go
+
+// Sessions DAO reader/query struct
 type Sessions struct {
 	Adapter      *Tt.Adapter `json:"-" msg:"-" query:"-" form:"-" long:"adapter"`
 	SessionToken string      `json:"sessionToken" form:"sessionToken" query:"sessionToken" long:"sessionToken" msg:"sessionToken"`
@@ -262,6 +524,8 @@ type Users struct {
 	UserName           string      `json:"userName" form:"userName" query:"userName" long:"userName" msg:"userName"`
 	Country            string      `json:"country" form:"country" query:"country" long:"country" msg:"country"`
 	Language           string      `json:"language" form:"language" query:"language" long:"language" msg:"language"`
+	PropertyCount      int64       `json:"propertyCount" form:"propertyCount" query:"propertyCount" long:"propertyCount" msg:"propertyCount"`
+	PropertyBought     int64       `json:"propertyBought" form:"propertyBought" query:"propertyBought" long:"propertyBought" msg:"propertyBought"`
 }
 
 // NewUsers create new ORM reader/query object
@@ -355,6 +619,8 @@ func (u *Users) SqlSelectAllFields() string { //nolint:dupl false positive
 	, "userName"
 	, "country"
 	, "language"
+	, "propertyCount"
+	, "propertyBought"
 	`
 }
 
@@ -378,6 +644,8 @@ func (u *Users) SqlSelectAllUncensoredFields() string { //nolint:dupl false posi
 	, "userName"
 	, "country"
 	, "language"
+	, "propertyCount"
+	, "propertyBought"
 	`
 }
 
@@ -402,6 +670,8 @@ func (u *Users) ToUpdateArray() A.X { //nolint:dupl false positive
 		A.X{`=`, 15, u.UserName},
 		A.X{`=`, 16, u.Country},
 		A.X{`=`, 17, u.Language},
+		A.X{`=`, 18, u.PropertyCount},
+		A.X{`=`, 19, u.PropertyBought},
 	}
 }
 
@@ -585,6 +855,26 @@ func (u *Users) SqlLanguage() string { //nolint:dupl false positive
 	return `"language"`
 }
 
+// IdxPropertyCount return name of the index
+func (u *Users) IdxPropertyCount() int { //nolint:dupl false positive
+	return 18
+}
+
+// SqlPropertyCount return name of the column being indexed
+func (u *Users) SqlPropertyCount() string { //nolint:dupl false positive
+	return `"propertyCount"`
+}
+
+// IdxPropertyBought return name of the index
+func (u *Users) IdxPropertyBought() int { //nolint:dupl false positive
+	return 19
+}
+
+// SqlPropertyBought return name of the column being indexed
+func (u *Users) SqlPropertyBought() string { //nolint:dupl false positive
+	return `"propertyBought"`
+}
+
 // CensorFields remove sensitive fields for output
 func (u *Users) CensorFields() { //nolint:dupl false positive
 	u.Password = ``
@@ -617,6 +907,8 @@ func (u *Users) ToArray() A.X { //nolint:dupl false positive
 		u.UserName,           // 15
 		u.Country,            // 16
 		u.Language,           // 17
+		u.PropertyCount,      // 18
+		u.PropertyBought,     // 19
 	}
 }
 
@@ -640,6 +932,8 @@ func (u *Users) FromArray(a A.X) *Users { //nolint:dupl false positive
 	u.UserName = X.ToS(a[15])
 	u.Country = X.ToS(a[16])
 	u.Language = X.ToS(a[17])
+	u.PropertyCount = X.ToI(a[18])
+	u.PropertyBought = X.ToI(a[19])
 	return u
 }
 
@@ -660,6 +954,8 @@ func (u *Users) FromUncensoredArray(a A.X) *Users { //nolint:dupl false positive
 	u.UserName = X.ToS(a[15])
 	u.Country = X.ToS(a[16])
 	u.Language = X.ToS(a[17])
+	u.PropertyCount = X.ToI(a[18])
+	u.PropertyBought = X.ToI(a[19])
 	return u
 }
 
@@ -721,6 +1017,8 @@ var UsersFieldTypeMap = map[string]Tt.DataType{ //nolint:dupl false positive
 	`userName`:           Tt.String,
 	`country`:            Tt.String,
 	`language`:           Tt.String,
+	`propertyCount`:      Tt.Integer,
+	`propertyBought`:     Tt.Integer,
 }
 
 // DO NOT EDIT, will be overwritten by github.com/kokizzu/D/Tt/tarantool_orm_generator.go

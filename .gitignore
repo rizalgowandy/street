@@ -12,6 +12,10 @@ deploy/static
 docker/
 *.upx
 **/*.upx
-tmpdb
+_tmpdb
 .DS_Store
 cache
+docker-data
+tmpdb
+AuthKey_*.p8
+upload

@@ -15,6 +15,7 @@ import (
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2/utils"
+	"github.com/rs/zerolog/log"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/kokizzu/gotro/A"
@@ -24,7 +25,6 @@ import (
 	"github.com/kokizzu/gotro/X"
 	"github.com/kokizzu/lexid"
 	"github.com/kpango/fastime"
-	"github.com/rs/zerolog/log"
 	"github.com/yosuke-furukawa/json5/encoding/json5"
 
 	"street/conf"
@@ -34,7 +34,7 @@ import (
 //go:generate replacer -afterprefix "Id\" form" "Id,string\" form" type common.go
 //go:generate replacer -afterprefix "json:\"id\"" "json:\"id,string\"" type common.go
 //go:generate replacer -afterprefix "By\" form" "By,string\" form" type common.go
-// go:generate msgp -tests=false -file common.go -o  common__MSG.GEN.go
+//go:generate msgp -tests=false -file common.go -o  common__MSG.GEN.go
 //go:generate farify doublequote --file common.go
 
 type RawFile struct {
@@ -101,6 +101,7 @@ type RequestCommon struct {
 	Action        string          `json:"action" form:"action" query:"action" long:"action" msg:"action"`
 	Lat           float64         `json:"lat" form:"lat" query:"lat" long:"lat" msg:"lat"`
 	Long          float64         `json:"long" form:"long" query:"long" long:"long" msg:"long"`
+	RefId					uint64
 
 	// in seconds
 	now   int64     `json:"-" form:"now" query:"now" long:"now" msg:"-"`
@@ -142,6 +143,13 @@ func (l *RequestCommon) ToFiberCtx(ctx *fiber.Ctx, out any, rc *ResponseCommon, 
 			ctx.Write(buffer.Bytes())
 		} else {
 			byt, err := json.Marshal(out)
+			if errors.Is(err, &json.UnsupportedTypeError{}) {
+				if conf.IsDebug() {
+					L.Describe(err)
+					L.Print(`forgot to convert map[any]any to map[string]any?`)
+					return err
+				}
+			}
 			if L.IsError(err, `json.Marshal: %#v`, out) {
 				spew.Dump(in)
 				spew.Dump(out)
@@ -153,7 +161,7 @@ func (l *RequestCommon) ToFiberCtx(ctx *fiber.Ctx, out any, rc *ResponseCommon, 
 			}
 			// TODO: log size/bytes written
 			if l.Debug || rc.HasError() {
-				L.Describe(in)
+				//L.Describe(X.ToJson5(in))
 				log.Print(string(byt))
 			}
 		}

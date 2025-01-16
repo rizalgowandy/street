@@ -5,6 +5,21 @@ import (
 	"github.com/kokizzu/gotro/D/Tt"
 )
 
+type (
+	UserRegisterStat struct {
+		Date  string `json:"date"`
+		Count int64  `json:"count"`
+	}
+	RealtorStat struct {
+		Date          string `json:"date"`
+		TotalActivity int64  `json:"totalActivity"`
+	}
+	BuyerStat struct {
+		Date          string `json:"date"`
+		TotalActivity int64  `json:"totalActivity"`
+	}
+)
+
 const (
 	TableUsers Tt.TableName = `users`
 
@@ -26,6 +41,8 @@ const (
 	UserName           = `userName`
 	Country            = `country`  // 2-letters ISO country code
 	Language           = `language` // 2-letters ISO country code (only EN and TW available, if empty assume EN)
+	PropertyCount      = `propertyCount`
+	PropertyBought     = `propertyBought`
 )
 
 const (
@@ -38,6 +55,13 @@ const (
 
 	LoginAt  = `loginAt`
 	LoginIPs = `loginIPs`
+)
+
+const (
+	TableFeedbacks Tt.TableName = `feedbacks`
+
+	UserMessage = `userMessage`
+	AdminReply  = `adminReply`
 )
 
 var TarantoolTables = map[Tt.TableName]*Tt.TableProp{
@@ -61,6 +85,8 @@ var TarantoolTables = map[Tt.TableName]*Tt.TableProp{
 			{UserName, Tt.String},
 			{Country, Tt.String},
 			{Language, Tt.String},
+			{PropertyCount, Tt.Integer},
+			{PropertyBought, Tt.Integer},
 		},
 		AutoIncrementId:  true,
 		Unique1:          Email,
@@ -79,6 +105,20 @@ var TarantoolTables = map[Tt.TableName]*Tt.TableProp{
 		},
 		Unique1: SessionToken,
 		Engine:  Tt.Memtx,
+	},
+	TableFeedbacks: {
+		Fields: []Tt.Field{
+			{Id, Tt.Unsigned},
+			{CreatedBy, Tt.Unsigned}, // user
+			{CreatedAt, Tt.Integer},
+			{UpdatedBy, Tt.Unsigned}, // admin
+			{UpdatedAt, Tt.Integer},
+			{DeletedAt, Tt.Integer}, // solved or invalid
+			{UserMessage, Tt.String},
+			{AdminReply, Tt.String},
+		},
+		AutoIncrementId: true,
+		Engine:          Tt.Vinyl,
 	},
 }
 

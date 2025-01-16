@@ -3,12 +3,15 @@ package rqProperty
 import (
 	"fmt"
 
+	"github.com/goccy/go-json"
 	"github.com/kokizzu/gotro/A"
+	"github.com/kokizzu/gotro/D/Tt"
 	"github.com/kokizzu/gotro/L"
 	"github.com/kokizzu/gotro/M"
 	"github.com/kokizzu/gotro/S"
 	"github.com/kokizzu/gotro/X"
 	"github.com/tarantool/go-tarantool"
+	"github.com/tidwall/gjson"
 
 	"street/conf"
 	"street/model/mProperty"
@@ -16,6 +19,35 @@ import (
 )
 
 // TODO: this is slow, use tarantool-go api instead
+
+type PropertyWithNote struct {
+	*Property
+	ContactEmail string `json:"contactEmail" form:"contactEmail" query:"contactEmail" long:"contactEmail" msg:"contactEmail"`
+	ContactPhone string `json:"contactPhone" form:"contactPhone" query:"contactPhone" long:"contactPhone" msg:"contactPhone"`
+	About        string `json:"about" form:"about" query:"about" long:"about" msg:"about"`
+	Image3dUrl	 string `json:"image3dUrl" form:"image3dUrl" query:"image3dUrl" long:"image3dUrl" msg:"image3dUrl"`
+}
+
+func (pwn *PropertyWithNote) FromArray(row []any) {
+	pwn.Property.FromArray(row)
+	pwn.NormalizeFloorList()
+	var nt PropertyNote
+	if json.Unmarshal([]byte(pwn.Property.Note), &nt) != nil {
+		pwn.About = nt.About
+		pwn.ContactEmail = nt.ContactEmail
+		pwn.ContactPhone = nt.ContactPhone
+	}
+}
+
+func (rq *Property) ToPropertyWithNote() PropertyWithNote {
+	return PropertyWithNote{
+		Property:     rq,
+		ContactEmail: gjson.Get(rq.Note, `contactEmail`).String(),
+		ContactPhone: gjson.Get(rq.Note, `contactPhone`).String(),
+		About:        gjson.Get(rq.Note, `about`).String(),
+		Image3dUrl: ``,
+	}
+}
 
 func (rq *Property) FindPropertiesBySerialNumber(serialNumber string) (res []*Property) {
 	const comment = `-- Property) FindPropertiesBySerialNumber`
@@ -136,6 +168,48 @@ FROM ` + p.SqlTableName() + whereAndSql + orderBySql + limitOffsetSql
 	return
 }
 
+type PropertyNote struct {
+	ContactEmail string `json:"contactEmail" form:"contactEmail" query:"contactEmail" long:"contactEmail" msg:"contactEmail"`
+	ContactPhone string `json:"contactPhone" form:"contactPhone" query:"contactPhone" long:"contactPhone" msg:"contactPhone"`
+	About        string `json:"about" form:"about" query:"about" long:"about" msg:"about"`
+}
+
+func (p *Property) FindByPaginationWithNote(meta *zCrud.Meta, in *zCrud.PagerIn, out *zCrud.PagerOut) (res [][]any) {
+	const comment = `-- Property) FindByPaginationWithNote`
+
+	validFields := PropertyFieldTypeMap
+	whereAndSql := out.WhereAndSqlTt(in.Filters, validFields)
+
+	queryCount := comment + `
+SELECT COUNT(1)
+FROM ` + p.SqlTableName() + whereAndSql + `
+LIMIT 1`
+	p.Adapter.QuerySql(queryCount, func(row []any) {
+		out.CalculatePages(in.Page, in.PerPage, int(X.ToI(row[0])))
+	})
+
+	orderBySql := out.OrderBySqlTt(in.Order, validFields)
+	limitOffsetSql := out.LimitOffsetSql()
+
+	queryRows := comment + `
+SELECT ` + meta.ToSelect() + `
+FROM ` + p.SqlTableName() + whereAndSql + orderBySql + limitOffsetSql
+
+	L.Print(`Query:`, queryRows)
+	p.Adapter.QuerySql(queryRows, func(row []any) {
+		var nt PropertyNote
+		row[0] = X.ToS(row[0]) // ensure id is string
+		if nil != json.Unmarshal([]byte(X.ToS(row[p.IdxNote()])), &nt) {
+			nt.About = X.ToS(row[p.IdxNote()])
+		}
+
+		row[p.IdxNote()] = nt
+		res = append(res, row)
+	})
+
+	return
+}
+
 func (p *PropertyUS) FindByPagination(meta *zCrud.Meta, in *zCrud.PagerIn, out *zCrud.PagerOut) (res [][]any) {
 	const comment = `-- PropertyUS) FindByPagination`
 
@@ -164,7 +238,7 @@ FROM ` + p.SqlTableName() + whereAndSql + orderBySql + limitOffsetSql
 	return
 }
 
-func (p *Property) FindOwnedByPagination(ownerId uint64, in *zCrud.PagerIn, out *zCrud.PagerOut) (res []Property) {
+func (p *Property) FindOwnedByPagination(ownerId uint64, in *zCrud.PagerIn, out *zCrud.PagerOut) (res []PropertyWithNote) {
 	const comment = `-- Property) FindOwnedByPagination`
 
 	validFields := PropertyFieldTypeMap
@@ -187,7 +261,7 @@ LIMIT 1`
 	orderBySql := out.OrderBySqlTt(in.Order, validFields)
 	limitOffsetSql := out.LimitOffsetSql()
 
-	res = make([]Property, 0, out.PerPage)
+	res = make([]PropertyWithNote, 0, out.PerPage)
 	count := 0
 
 	queryRows := comment + `
@@ -195,9 +269,8 @@ SELECT ` + p.SqlSelectAllFields() + `
 FROM ` + p.SqlTableName() + whereAndSql + orderBySql + limitOffsetSql
 
 	p.Adapter.QuerySql(queryRows, func(row []any) {
-		res = append(res, Property{})
+		res = append(res, PropertyWithNote{Property: &Property{}})
 		res[count].FromArray(row)
-		res[count].NormalizeFloorList()
 		count++
 	})
 	return
@@ -217,6 +290,47 @@ func (p *Property) FindByLatLong(lat float64, long float64, limit int, offset in
 	}
 	return true
 }
+
+func (p *Property) FindByLatLongAndCountry(propAdapter *Tt.Adapter, countryCode string, lat float64, long float64, limit int, offset int, callback func(row []any) bool) bool {
+
+	// Default is taiwan property data
+	prefix := `Property) FindByLatLongAndCountry`
+
+	// Switch case if the country code is US
+	if countryCode == "US" {
+		prefix = `PropertyUS) FindByLatLong`
+		prop := NewPropertyUS(propAdapter)
+		return prop.FindPropUSByLatLong(lat, long, limit, offset, callback)
+	}
+
+	p.Coord = []any{lat, long}
+	res, err := p.Adapter.Select(p.SpaceName(), p.SpatialIndexCoord(), uint32(offset), uint32(limit), tarantool.IterNeighbor, p.Coord)
+	if L.IsError(err, prefix+` failed: `+p.SpaceName()) {
+		return false
+	}
+	for _, row := range res.Tuples() {
+		if !callback(row) {
+			break
+		}
+	}
+	return true
+}
+
+func (p *PropertyUS) FindPropUSByLatLong(lat float64, long float64, limit int, offset int, callback func(row []any) bool) bool {
+	const prefix = `PropertyUS) FindByLatLong`
+	p.Coord = []any{lat, long}
+	res, err := p.Adapter.Select(p.SpaceName(), p.SpatialIndexCoord(), uint32(offset), uint32(limit), tarantool.IterNeighbor, p.Coord)
+	if L.IsError(err, prefix+` failed: `+p.SpaceName()) {
+		return false
+	}
+	for _, row := range res.Tuples() {
+		if !callback(row) {
+			break
+		}
+	}
+	return true
+}
+
 func (p *PropertyHistory) FindByPagination(meta *zCrud.Meta, in *zCrud.PagerIn, out *zCrud.PagerOut) (res [][]any) {
 	const comment = `-- PropertyHistory) FindByPagination`
 
@@ -418,6 +532,49 @@ func (p *Property) NormalizeFloorList() {
 	p.FloorList = floorsArr
 }
 
+func (p *PropertyUS) NormalizeFloorList() {
+	floorsArr := []any{}
+	for _, floor := range p.FloorList {
+		floorObj := M.SX{}
+		maa, ok := floor.(map[any]any)
+		if !ok {
+			continue
+		}
+		for key, val := range maa {
+			strKey, ok := key.(string)
+			if !ok {
+				continue
+			}
+			if strKey == `rooms` {
+				rooms, ok := val.([]any)
+				if !ok {
+					continue
+				}
+				roomsArr := []M.SX{}
+				for _, room := range rooms {
+					room, ok := room.(map[any]any)
+					if !ok {
+						continue
+					}
+					roomObj := M.SX{}
+					for key, val := range room {
+						strKey, ok := key.(string)
+						if !ok {
+							continue
+						}
+						roomObj[strKey] = val
+					}
+					roomsArr = append(roomsArr, roomObj)
+				}
+				val = roomsArr
+			}
+			floorObj[strKey] = val
+		}
+		floorsArr = append(floorsArr, floorObj)
+	}
+	p.FloorList = floorsArr
+}
+
 func (p *UserPropLikes) LikedMap(propIds []uint64) (res map[uint64]bool) {
 	query := `-- UserPropLikes) LikedMap
 SELECT ` + p.SqlPropId() + `
@@ -475,4 +632,69 @@ func (p *PropertyUS) ToProperty() *Property {
 	M.FastestCopyStruct(p, out)
 	p.Adapter = backupAdapter
 	return out
+}
+
+func (p *PropertyExtraUS) ToPropertyExtra() *PropertyExtraUS {
+	out := &PropertyExtraUS{}
+	backupAdapter := p.Adapter
+	p.Adapter = nil
+	M.FastestCopyStruct(p, out)
+	p.Adapter = backupAdapter
+	return out
+}
+
+func (p *PropertyTW) ToProperty() *Property {
+	out := &Property{}
+	backupAdapter := p.Adapter
+
+	M.FastestCopyStruct(p, out)
+	p.Adapter = backupAdapter
+	return out
+}
+
+func (rq *PropertyTW) FindAllPropertiesOffsetLimit(offset, limit int) (res []*PropertyTW) {
+	const comment = `-- PropertyTW) FindAllProperties`
+
+	query := comment + `
+SELECT ` + rq.SqlSelectAllFields() + `
+FROM ` + rq.SqlTableName() + `
+ORDER BY "id"
+LIMIT ` + X.ToS(offset) + `,` + X.ToS(limit)
+	if conf.IsDebug() {
+		//L.Print(query)
+	}
+	rq.Adapter.QuerySql(query, func(row []any) {
+		obj := &PropertyTW{}
+		obj.FromArray(row)
+		res = append(res, obj)
+	})
+	return res
+}
+
+func (p *PropertyTW) FindByPagination(meta *zCrud.Meta, in *zCrud.PagerIn, out *zCrud.PagerOut) (res [][]any) {
+	const comment = `-- PropertyTW) FindByPagination`
+
+	validFields := PropertyFieldTypeMap
+	whereAndSql := out.WhereAndSqlTt(in.Filters, validFields)
+
+	queryCount := comment + `
+SELECT COUNT(1)
+FROM ` + p.SqlTableName() + whereAndSql + `
+LIMIT 1`
+	p.Adapter.QuerySql(queryCount, func(row []any) {
+		out.CalculatePages(in.Page, in.PerPage, int(X.ToI(row[0])))
+	})
+
+	orderBySql := out.OrderBySqlTt(in.Order, validFields)
+	limitOffsetSql := out.LimitOffsetSql()
+
+	queryRows := comment + `
+SELECT ` + meta.ToSelect() + `
+FROM ` + p.SqlTableName() + whereAndSql + orderBySql + limitOffsetSql
+	p.Adapter.QuerySql(queryRows, func(row []any) {
+		row[0] = X.ToS(row[0]) // ensure id is string
+		res = append(res, row)
+	})
+
+	return
 }

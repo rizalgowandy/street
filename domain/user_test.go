@@ -192,7 +192,7 @@ func TestLogout(t *testing.T) {
 					Password: pass,
 				}
 				out := d.GuestLogin(in)
-				assert.Equal(t, out.Error, ErrGuestLoginPasswordOrEmailIncorrect)
+				assert.Equal(t, out.Error, ErrGuestLoginPasswordIncorrect)
 			})
 
 			t.Run(`loginAfterChangePass,newPass`, func(t *testing.T) {
@@ -321,6 +321,7 @@ func TestUserSearchPropAndLikes(t *testing.T) {
 		Cmd:           zCrud.CmdUpsert,
 		Property: rqProperty.Property{
 			UniqPropKey:            "TEST234",
+			SerialNumber:           "1001",
 			SizeM2:                 "200.5",
 			MainUse:                "Residential",
 			MainBuildingMaterial:   "Paper",
@@ -351,6 +352,7 @@ func TestUserSearchPropAndLikes(t *testing.T) {
 		Cmd:           zCrud.CmdUpsert,
 		Property: rqProperty.Property{
 			UniqPropKey:            "TEST123",
+			SerialNumber:           "1002",
 			SizeM2:                 "123.5",
 			MainUse:                "Residential",
 			MainBuildingMaterial:   "Cardboard",
@@ -391,7 +393,7 @@ func TestUserSearchPropAndLikes(t *testing.T) {
 	t.Run(`likeProp1`, func(t *testing.T) {
 		in1 := &UserLikePropIn{
 			RequestCommon: testAdminRequestCommon(UserLikePropAction),
-			propId:        propId1,
+			PropId:        propId1,
 			Like:          true,
 		}
 		out := d.UserLikeProp(in1)
@@ -407,7 +409,7 @@ func TestUserSearchPropAndLikes(t *testing.T) {
 		t.Run(`likeProp2`, func(t *testing.T) {
 			in2 := &UserLikePropIn{
 				RequestCommon: testAdminRequestCommon(UserLikePropAction),
-				propId:        out2.Property.Id,
+				PropId:        out2.Property.Id,
 				Like:          true,
 			}
 			out := d.UserLikeProp(in2)
@@ -424,7 +426,7 @@ func TestUserSearchPropAndLikes(t *testing.T) {
 
 				in := &UserLikePropIn{
 					RequestCommon: testAdminRequestCommon(UserLikePropAction),
-					propId:        out2.Property.Id,
+					PropId:        out2.Property.Id,
 					Like:          false,
 				}
 				out := d.UserLikeProp(in)
@@ -442,7 +444,7 @@ func TestUserSearchPropAndLikes(t *testing.T) {
 		t.Run(`unlikeProp1`, func(t *testing.T) {
 			in := &UserLikePropIn{
 				RequestCommon: testAdminRequestCommon(UserLikePropAction),
-				propId:        out1.Property.Id,
+				PropId:        out1.Property.Id,
 				Like:          false,
 			}
 			out := d.UserLikeProp(in)

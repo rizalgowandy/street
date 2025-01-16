@@ -8,6 +8,11 @@ import (
 )
 
 const (
+	PropertyPurposeSale string = `for sale`
+	PropertyPurposeRent string = `for rent`
+)
+
+const (
 	TablePropertyUS      Tt.TableName = `propertyUS`
 	TablePropertyExtraUS Tt.TableName = `propertyExtraUS`
 
@@ -57,6 +62,10 @@ const (
 )
 
 const (
+	TablePropertyTW Tt.TableName = `propertyTW`
+)
+
+const (
 	TableProperty Tt.TableName = `property`
 
 	Id                     = `id`
@@ -79,8 +88,12 @@ const (
 	UpdatedAt              = `updatedAt`
 	UpdatedBy              = `updatedBy`
 	DeletedAt              = `deletedAt`
+	About                  = `about`
+	ContactEmail           = `contactEmail`
+	ContactPhone           = `contactPhone`
 
-	TablePropertyHistory Tt.TableName = `property_history`
+	TablePropertyHistory   Tt.TableName = `property_history`
+	TablePropertyHistoryUS Tt.TableName = `property_historyUS`
 
 	PropertyKey            = `propertyKey` // refer to UniqPropKey?
 	TransactionKey         = `transactionKey`
@@ -159,7 +172,44 @@ func buildPropertyExtraUs() []Tt.Field {
 	}
 
 	return listFields
+}
 
+func buildPropertyHistorySchema() []Tt.Field {
+
+	schema := map[int]Tt.Field{
+		0:  {Id, Tt.Unsigned},
+		1:  {PropertyKey, Tt.String},
+		2:  {TransactionKey, Tt.String},
+		3:  {TransactionType, Tt.String},
+		4:  {TransactionSign, Tt.String},
+		5:  {TransactionTime, Tt.String},
+		6:  {TransactionDateNormal, Tt.String},
+		7:  {TransactionNumber, Tt.String},
+		8:  {PriceNTD, Tt.Integer},
+		9:  {PricePerUnit, Tt.Integer},
+		10: {Price, Tt.Integer},
+		11: {Address, Tt.String},
+		12: {District, Tt.String},
+		13: {Note, Tt.String},
+		14: {CreatedAt, Tt.Integer},
+		15: {CreatedBy, Tt.Unsigned},
+		16: {UpdatedAt, Tt.Integer},
+		17: {UpdatedBy, Tt.Unsigned},
+		18: {DeletedAt, Tt.Integer},
+		19: {SerialNumber, Tt.String},
+		20: {TransactionDescription, Tt.String},
+	}
+
+	listFields := make([]Tt.Field, len(schema))
+	for i := 0; i < len(listFields); i++ {
+		if schema[i].Name == "" && schema[i].Type == "" {
+			continue
+		} else {
+			listFields[i] = schema[i]
+		}
+	}
+
+	return listFields
 }
 
 func buildStandardPropertySchema() []Tt.Field {
@@ -257,29 +307,7 @@ var TarantoolTables = map[Tt.TableName]*Tt.TableProp{
 		Spatial:         Coord,
 	},
 	TablePropertyHistory: {
-		Fields: []Tt.Field{
-			{Id, Tt.Unsigned},
-			{PropertyKey, Tt.String},
-			{TransactionKey, Tt.String},
-			{TransactionType, Tt.String},
-			{TransactionSign, Tt.String},
-			{TransactionTime, Tt.String},
-			{TransactionDateNormal, Tt.String},
-			{TransactionNumber, Tt.String},
-			{PriceNTD, Tt.Integer},
-			{PricePerUnit, Tt.Integer},
-			{Price, Tt.Integer},
-			{Address, Tt.String},
-			{District, Tt.String},
-			{Note, Tt.String},
-			{CreatedAt, Tt.Integer},
-			{CreatedBy, Tt.Unsigned},
-			{UpdatedAt, Tt.Integer},
-			{UpdatedBy, Tt.Unsigned},
-			{DeletedAt, Tt.Integer},
-			{SerialNumber, Tt.String},
-			{TransactionDescription, Tt.String},
-		},
+		Fields:          buildPropertyHistorySchema(),
 		AutoIncrementId: true,
 		Unique1:         TransactionKey,
 		Indexes:         []string{PropertyKey},
@@ -316,6 +344,72 @@ var TarantoolTables = map[Tt.TableName]*Tt.TableProp{
 		Unique1:         PropertyKey,
 		Engine:          Tt.Vinyl,
 	},
+	TablePropertyHistoryUS: {
+		Fields:          buildPropertyHistorySchema(),
+		AutoIncrementId: true,
+		Unique1:         TransactionKey,
+		Indexes:         []string{PropertyKey},
+		Engine:          Tt.Memtx,
+	},
+	TablePropertyTW: {
+		Fields:          buildStandardPropertySchema(),
+		AutoIncrementId: true,
+		Unique1:         UniqPropKey,
+		Indexes:         []string{SerialNumber},
+		Engine:          Tt.Memtx,
+		Spatial:         Coord,
+	},
 }
 
-var ClickhouseTables = map[Ch.TableName]*Ch.TableProp{}
+const (
+	TableViewedRooms Ch.TableName = `viewedRooms`
+
+	ActorId    = `actorId`
+	PropertyId = `propertyId`
+	RoomLabel  = `roomLabel`
+	Country    = `country`
+)
+
+const (
+	TableScannedAreas Ch.TableName = `scannedAreas`
+
+	Latitude  = `latitude`
+	Longitude = `longitude`
+)
+
+const (
+	TableScannedProperties Ch.TableName = `scannedProperties`
+)
+
+var ClickhouseTables = map[Ch.TableName]*Ch.TableProp{
+	TableViewedRooms: {
+		Fields: []Ch.Field{
+			{ActorId, Ch.UInt64},
+			{CreatedAt, Ch.DateTime},
+			{PropertyId, Ch.UInt64},
+			{RoomLabel, Ch.String},
+			{Country, Ch.String},
+		},
+		Orders: []string{CreatedAt, ActorId},
+	},
+	TableScannedAreas: {
+		Fields: []Ch.Field{
+			{ActorId, Ch.UInt64},
+			{CreatedAt, Ch.DateTime},
+			{Latitude, Ch.Float64},
+			{Longitude, Ch.Float64},
+			{City, Ch.String},
+			{State, Ch.String},
+		},
+		Orders: []string{CreatedAt, ActorId},
+	},
+	TableScannedProperties: {
+		Fields: []Ch.Field{
+			{ActorId, Ch.UInt64},
+			{CreatedAt, Ch.DateTime},
+			{CountryCode, Ch.String},
+			{PropertyId, Ch.UInt64},
+		},
+		Orders: []string{CreatedAt, ActorId},
+	},
+}

@@ -19,14 +19,14 @@ type (
 	RealtorPropertyOut struct {
 		ResponseCommon
 
-		Property *rqProperty.Property `json:"property" form:"property" query:"property" long:"property" msg:"property"`
+		Property *rqProperty.PropertyWithNote `json:"property" form:"property" query:"property" long:"property" msg:"property"`
 	}
 )
 
 const (
 	RealtorPropertyAction = `realtor/property`
 
-	ErrPropertyNotFound = `realtor property not found`
+	ErrRealtorPropertyNotFound = `realtor property not found`
 )
 
 func (d *Domain) RealtorProperty(in *RealtorPropertyIn) (out RealtorPropertyOut) {
@@ -40,10 +40,14 @@ func (d *Domain) RealtorProperty(in *RealtorPropertyIn) (out RealtorPropertyOut)
 	r := rqProperty.NewProperty(d.PropOltp)
 	r.Id = in.Id
 	if !r.FindById() {
-		out.SetError(400, ErrPropertyNotFound)
+		out.SetError(400, ErrRealtorPropertyNotFound)
 		return
 	}
+	in.RefId = in.Id
 	r.NormalizeFloorList()
-	out.Property = r
+	r.Adapter = nil
+
+	propertyWithNote := r.ToPropertyWithNote()
+	out.Property = &propertyWithNote
 	return
 }

@@ -1,12 +1,15 @@
 package domain
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/kokizzu/gotro/X"
 
 	"street/conf"
 	"street/model/mProperty/rqProperty"
+	"street/model/mProperty/saProperty"
+	"street/model/mStorage/rqStorage"
 )
 
 //go:generate gomodifytags -all -add-tags json,form,query,long,msg -transform camelcase --skip-unexported -w -file UserSearchProp.go
@@ -34,7 +37,8 @@ type (
 	}
 
 	Property struct {
-		*rqProperty.Property
+		*rqProperty.PropertyWithNote
+
 		Lat float64 `json:"lat" form:"lat" query:"lat" long:"lat" msg:"lat"`
 		Lng float64 `json:"lng" form:"lng" query:"lng" long:"lng" msg:"lng"`
 
@@ -115,13 +119,13 @@ func (d *Domain) UserSearchProp(in *UserSearchPropIn) (out UserSearchPropOut) {
 	}
 
 	out.Properties = make([]Property, 0, in.Limit)
-	propIds := make([]uint64, 0, in.Limit)
+	var propIds = make([]uint64, 0, in.Limit)
 
 	// Get satisfied property with expected condition
 	satisfiedProperties := make([]Property, 0, in.Limit)
 
-	ok := prop.FindByLatLong(in.CenterLat, in.CenterLong, in.Limit, in.Offset, func(row []any) bool {
-		item := Property{Property: &rqProperty.Property{}}
+	ok := prop.FindByLatLongAndCountry(d.PropOltp, sess.Country, in.CenterLat, in.CenterLong, in.Limit, in.Offset, func(row []any) bool {
+		item := Property{PropertyWithNote: &rqProperty.PropertyWithNote{Property: &rqProperty.Property{}}}
 		item.FromArray(row)
 		if item.DeletedAt > 0 { // skip deleted property
 			return true
@@ -131,10 +135,16 @@ func (d *Domain) UserSearchProp(in *UserSearchPropIn) (out UserSearchPropOut) {
 			item.Lng = X.ToF(item.Coord[1])
 		}
 		item.id = item.Id
-		item.NormalizeFloorList()
 		item.DistanceKM = conf.DistanceKm(item.Lat, item.Lng, in.CenterLat, in.CenterLong)
 		if item.DistanceKM > in.MaxDistanceKM {
 			return false
+		}
+
+		img3d := rqStorage.NewDesignFiles(d.StorOltp)
+		img3dCountryPropId := fmt.Sprintf("%s:%d", item.CountryCode, item.Id)
+		img3d.CountryPropId = img3dCountryPropId
+		if img3d.FindByCountryPropId() {
+			item.PropertyWithNote.Image3dUrl = img3d.FilePath	
 		}
 
 		satisfiedProperties = append(satisfiedProperties, item)
@@ -167,5 +177,33 @@ func (d *Domain) UserSearchProp(in *UserSearchPropIn) (out UserSearchPropOut) {
 		}
 	}
 
+	var (
+		city string = ``
+		state string = ``
+	)
+
+	if len(out.Properties) > 0 {
+		city = out.Properties[0].City
+		state = out.Properties[0].State
+	}
+	
+	d.insertScannedAreas(saProperty.ScannedAreas{
+		ActorId: sess.UserId,
+		CreatedAt: in.TimeNow(),
+		Latitude: in.Lat,
+		Longitude: in.Long,
+		City: city,
+		State: state,
+	})
+
+	for _, v := range out.Properties {
+		d.insertScannedProps(saProperty.ScannedProperties{
+			ActorId: sess.UserId,
+			CreatedAt: in.TimeNow(),
+			CountryCode: v.CountryCode,
+			PropertyId: v.Id,
+		})
+	}
+	
 	return
 }

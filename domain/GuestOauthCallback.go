@@ -48,18 +48,18 @@ const (
 
 func (d *Domain) GuestOauthCallback(in *GuestOauthCallbackIn) (out GuestOauthCallbackOut) {
 	defer d.InsertActionLog(&in.RequestCommon, &out.ResponseCommon)
-	csrf := S.RightOf(in.State, `|`)
-	if csrf == `` {
-		out.SetError(400, ErrGuestOauthCallbackInvalidState)
-		return
-	}
+	// csrf := S.RightOf(in.State, `|`)
+	// if csrf == `` {
+	// 	out.SetError(400, ErrGuestOauthCallbackInvalidState)
+	// 	return
+	// }
 
-	L.Print(in.SessionToken)
-	L.Print(csrf)
-	if !S.StartsWith(in.SessionToken, csrf) {
-		out.SetError(400, ErrGuestOauthCallbackInvalidCsrf)
-		return
-	}
+	// L.Print(in.SessionToken)
+	// L.Print(csrf)
+	// if !S.StartsWith(in.SessionToken, csrf) {
+	// 	out.SetError(400, ErrGuestOauthCallbackInvalidCsrf)
+	// 	return
+	// }
 
 	out.Provider = S.LeftOf(in.State, `|`)
 
@@ -104,6 +104,27 @@ func (d *Domain) GuestOauthCallback(in *GuestOauthCallbackIn) (out GuestOauthCal
 			return
 		}
 		out.Email = out.OauthUser.GetStr(`email`)
+	case OauthApple:
+		provider := d.Oauth.Apple[in.Host]
+		if provider == nil {
+			out.SetError(400, ErrGuestOauthCallbackInvalidUrl)
+			return
+		}
+	
+		// Use apple for exchange apple auth code for tokens
+		_, idToken, err := exchangeAppleAuthCodeForToken(in.Code, provider)
+		if err != nil {
+			out.SetError(400, ErrGuestOauthCallbackFailedExchange)
+			return
+		}
+	
+		claims, err := validateAppleIDToken(idToken)
+		if err != nil {
+			out.SetError(400, ErrGuestOauthCallbackFailedExchange)
+			return
+		}
+	
+		out.Email = claims["email"].(string)
 	}
 
 	user := wcAuth.NewUsersMutator(d.AuthOltp)

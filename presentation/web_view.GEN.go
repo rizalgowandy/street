@@ -11,15 +11,17 @@ import (
 
 var viewList = map[string]string{
 	`Admin`: `../svelte/admin.html`, // ../svelte/admin.svelte
+	`Admin3DFiles`: `../svelte/admin/3dFiles.html`, // ../svelte/admin/3dFiles.svelte
 	`AdminAccessLog`: `../svelte/admin/accessLog.html`, // ../svelte/admin/accessLog.svelte
+	`AdminFeedbacks`: `../svelte/admin/feedbacks.html`, // ../svelte/admin/feedbacks.svelte
 	`AdminFiles`: `../svelte/admin/files.html`, // ../svelte/admin/files.svelte
 	`AdminPropHistories`: `../svelte/admin/propHistories.html`, // ../svelte/admin/propHistories.svelte
 	`AdminProperties`: `../svelte/admin/properties.html`, // ../svelte/admin/properties.svelte
+	`AdminPropertiesTW`: `../svelte/admin/propertiesTW.html`, // ../svelte/admin/propertiesTW.svelte
 	`AdminPropertiesUS`: `../svelte/admin/propertiesUS.html`, // ../svelte/admin/propertiesUS.svelte
-	`AdminProperty`: `../svelte/admin/property.html`, // ../svelte/admin/property.svelte
+	`AdminRevenue`: `../svelte/admin/revenue.html`, // ../svelte/admin/revenue.svelte
 	`AdminSessions`: `../svelte/admin/sessions.html`, // ../svelte/admin/sessions.svelte
 	`AdminUsers`: `../svelte/admin/users.html`, // ../svelte/admin/users.svelte
-	`Buyer`: `../svelte/buyer.html`, // ../svelte/buyer.svelte
 	`Debug`: `../svelte/debug.html`, // ../svelte/debug.svelte
 	`Error`: `../svelte/error.html`, // ../svelte/error.svelte
 	`GuestOauthCallback`: `../svelte/guest/oauthCallback.html`, // ../svelte/guest/oauthCallback.svelte
@@ -31,8 +33,13 @@ var viewList = map[string]string{
 	`Realtor`: `../svelte/realtor.html`, // ../svelte/realtor.svelte
 	`RealtorOwnedProperty`: `../svelte/realtor/ownedProperty.html`, // ../svelte/realtor/ownedProperty.svelte
 	`RealtorProperty`: `../svelte/realtor/property.html`, // ../svelte/realtor/property.svelte
+	`RealtorPropertyOld`: `../svelte/realtor/property_old.html`, // ../svelte/realtor/property_old.svelte
+	`RealtorRevenue`: `../svelte/realtor/revenue.html`, // ../svelte/realtor/revenue.svelte
 	`Tos`: `../svelte/tos.html`, // ../svelte/tos.svelte
 	`User`: `../svelte/user.html`, // ../svelte/user.svelte
+	`UserBuyers`: `../svelte/user/buyers.html`, // ../svelte/user/buyers.svelte
+	`UserListings`: `../svelte/user/listings.html`, // ../svelte/user/listings.svelte
+	`UserListingsListing`: `../svelte/user/listings/listing.html`, // ../svelte/user/listings/listing.svelte
 	`UserPropertyIndex`: `../svelte/user/property/index.html`, // ../svelte/user/property/index.svelte
 }
 
@@ -42,9 +49,19 @@ func (v *Views) RenderAdmin(c *fiber.Ctx, m M.SX) error {
 	return c.SendString(v.cache[`Admin`].Str(m))
 }
 
+func (v *Views) RenderAdmin3DFiles(c *fiber.Ctx, m M.SX) error {
+	c.Set("Content-Type", "text/html; charset=utf-8")
+	return c.SendString(v.cache[`Admin3DFiles`].Str(m))
+}
+
 func (v *Views) RenderAdminAccessLog(c *fiber.Ctx, m M.SX) error {
 	c.Set("Content-Type", "text/html; charset=utf-8")
 	return c.SendString(v.cache[`AdminAccessLog`].Str(m))
+}
+
+func (v *Views) RenderAdminFeedbacks(c *fiber.Ctx, m M.SX) error {
+	c.Set("Content-Type", "text/html; charset=utf-8")
+	return c.SendString(v.cache[`AdminFeedbacks`].Str(m))
 }
 
 func (v *Views) RenderAdminFiles(c *fiber.Ctx, m M.SX) error {
@@ -62,14 +79,19 @@ func (v *Views) RenderAdminProperties(c *fiber.Ctx, m M.SX) error {
 	return c.SendString(v.cache[`AdminProperties`].Str(m))
 }
 
+func (v *Views) RenderAdminPropertiesTW(c *fiber.Ctx, m M.SX) error {
+	c.Set("Content-Type", "text/html; charset=utf-8")
+	return c.SendString(v.cache[`AdminPropertiesTW`].Str(m))
+}
+
 func (v *Views) RenderAdminPropertiesUS(c *fiber.Ctx, m M.SX) error {
 	c.Set("Content-Type", "text/html; charset=utf-8")
 	return c.SendString(v.cache[`AdminPropertiesUS`].Str(m))
 }
 
-func (v *Views) RenderAdminProperty(c *fiber.Ctx, m M.SX) error {
+func (v *Views) RenderAdminRevenue(c *fiber.Ctx, m M.SX) error {
 	c.Set("Content-Type", "text/html; charset=utf-8")
-	return c.SendString(v.cache[`AdminProperty`].Str(m))
+	return c.SendString(v.cache[`AdminRevenue`].Str(m))
 }
 
 func (v *Views) RenderAdminSessions(c *fiber.Ctx, m M.SX) error {
@@ -80,11 +102,6 @@ func (v *Views) RenderAdminSessions(c *fiber.Ctx, m M.SX) error {
 func (v *Views) RenderAdminUsers(c *fiber.Ctx, m M.SX) error {
 	c.Set("Content-Type", "text/html; charset=utf-8")
 	return c.SendString(v.cache[`AdminUsers`].Str(m))
-}
-
-func (v *Views) RenderBuyer(c *fiber.Ctx, m M.SX) error {
-	c.Set("Content-Type", "text/html; charset=utf-8")
-	return c.SendString(v.cache[`Buyer`].Str(m))
 }
 
 func (v *Views) RenderDebug(c *fiber.Ctx, m M.SX) error {
@@ -142,6 +159,16 @@ func (v *Views) RenderRealtorProperty(c *fiber.Ctx, m M.SX) error {
 	return c.SendString(v.cache[`RealtorProperty`].Str(m))
 }
 
+func (v *Views) RenderRealtorPropertyOld(c *fiber.Ctx, m M.SX) error {
+	c.Set("Content-Type", "text/html; charset=utf-8")
+	return c.SendString(v.cache[`RealtorPropertyOld`].Str(m))
+}
+
+func (v *Views) RenderRealtorRevenue(c *fiber.Ctx, m M.SX) error {
+	c.Set("Content-Type", "text/html; charset=utf-8")
+	return c.SendString(v.cache[`RealtorRevenue`].Str(m))
+}
+
 func (v *Views) RenderTos(c *fiber.Ctx, m M.SX) error {
 	c.Set("Content-Type", "text/html; charset=utf-8")
 	return c.SendString(v.cache[`Tos`].Str(m))
@@ -150,6 +177,21 @@ func (v *Views) RenderTos(c *fiber.Ctx, m M.SX) error {
 func (v *Views) RenderUser(c *fiber.Ctx, m M.SX) error {
 	c.Set("Content-Type", "text/html; charset=utf-8")
 	return c.SendString(v.cache[`User`].Str(m))
+}
+
+func (v *Views) RenderUserBuyers(c *fiber.Ctx, m M.SX) error {
+	c.Set("Content-Type", "text/html; charset=utf-8")
+	return c.SendString(v.cache[`UserBuyers`].Str(m))
+}
+
+func (v *Views) RenderUserListings(c *fiber.Ctx, m M.SX) error {
+	c.Set("Content-Type", "text/html; charset=utf-8")
+	return c.SendString(v.cache[`UserListings`].Str(m))
+}
+
+func (v *Views) RenderUserListingsListing(c *fiber.Ctx, m M.SX) error {
+	c.Set("Content-Type", "text/html; charset=utf-8")
+	return c.SendString(v.cache[`UserListingsListing`].Str(m))
 }
 
 func (v *Views) RenderUserPropertyIndex(c *fiber.Ctx, m M.SX) error {

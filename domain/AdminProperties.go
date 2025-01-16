@@ -3,8 +3,10 @@ package domain
 import (
 	"fmt"
 
+	"github.com/kokizzu/gotro/I"
 	"github.com/kokizzu/gotro/L"
 	"github.com/kokizzu/gotro/M"
+	"github.com/kokizzu/gotro/S"
 
 	"street/model/mAuth/rqAuth"
 	"street/model/mProperty"
@@ -232,7 +234,6 @@ func (d *Domain) AdminProperties(in *AdminPropertiesIn) (out AdminPropertiesOut)
 	case zCrud.CmdUpsert, zCrud.CmdDelete, zCrud.CmdRestore:
 		prop := wcProperty.NewPropertyMutator(d.PropOltp)
 		prop.Id = in.Property.Id
-		user := rqAuth.NewUsers(d.AuthOltp)
 		if prop.Id > 0 {
 			if !prop.FindById() {
 				out.SetError(400, ErrAdminPropertyIdNotFound)
@@ -253,7 +254,7 @@ func (d *Domain) AdminProperties(in *AdminPropertiesIn) (out AdminPropertiesOut)
 		}
 
 		oldState := prop.ApprovalState
-		newState := in.Property.ApprovalState
+		newState := S.Trim(in.Property.ApprovalState)
 		haveMutation := prop.SetAll(in.Property, M.SB{
 			mProperty.PriceHistoriesSell: true,
 			mProperty.PriceHistoriesRent: true,
@@ -272,32 +273,49 @@ func (d *Domain) AdminProperties(in *AdminPropertiesIn) (out AdminPropertiesOut)
 			break
 		}
 
+		prop.NormalizeFloorList()
+		prop.Adapter = nil
 		out.Property = &prop.Property
+
+		var sendMailFunc func(email, number, lang, link string) error
+		var sendMailName string
+
+		if newState == `` && oldState != `` {
+			out.AddTrace(`state:accepted`)
+			sendMailFunc = d.Mailer.SendNotifPropertyAcceptedEmail
+			sendMailName = `SendNotifPropertyAcceptedEmail`
+		} else if newState != mProperty.ApprovalStatePending {
+			out.AddTrace(`state:rejected`)
+			sendMailFunc = d.Mailer.SendNotifPropertyRejectedEmail
+			sendMailName = `SendNotifPropertyRejectedEmail`
+		}
+
+		if sendMailFunc != nil {
+			user := rqAuth.NewUsers(d.AuthOltp)
+			user.Id = prop.CreatedBy
+			if user.FindById() {
+				d.runSubtask(func() {
+					err := sendMailFunc(user.Email,
+						fmt.Sprintf(`#%d`, prop.Id),
+						user.Language,
+						fmt.Sprintf("%s/realtor/property/%v", d.WebCfg.WebProtoDomain, in.Property.Id),
+					)
+					L.IsError(err, sendMailName)
+				})
+			} else {
+				out.AddTrace(`failFindRealtor:` + I.UToS(user.Id))
+				// continue anyway if failed to send email
+			}
+		}
 
 		if in.Pager.Page == 0 {
 			break
 		}
 
-		if newState == `` && oldState != `` {
-			d.runSubtask(func() {
-				err := d.Mailer.SendNotifPropertyAcceptedEmail(user.Email,
-					fmt.Sprintf("%s/realtor/ownedProperty/%v", d.WebCfg.WebProtoDomain, in.Property.Id),
-				)
-				L.IsError(err, `SendNotifPropertyAcceptedEmail`)
-			})
-		} else if newState != `` && oldState != `` {
-			d.runSubtask(func() {
-				err := d.Mailer.SendNotifPropertyRejectedEmail(user.Email,
-					fmt.Sprintf("%s/realtor/ownedProperty/%v", d.WebCfg.WebProtoDomain, in.Property.Id),
-				)
-				L.IsError(err, `SendNotifPropertyRejectedEmail`)
-			})
-		}
-
 		fallthrough
 	case zCrud.CmdList:
 		r := rqProperty.NewProperty(d.PropOltp)
-		out.Properties = r.FindByPagination(&AdminPropertiesMeta, &in.Pager, &out.Pager)
+		out.Properties = r.FindByPaginationWithNote(&AdminPropertiesMeta, &in.Pager, &out.Pager)
 	}
 
 	return

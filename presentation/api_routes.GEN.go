@@ -10,6 +10,16 @@ import (
 
 func ApiRoutes(fw *fiber.App, d *domain.Domain) {
 
+	// Admin3DFiles
+	fw.Post("/"+domain.Admin3DFilesAction, func(c *fiber.Ctx) error {
+		in := domain.Admin3DFilesIn{}
+		if err := webApiParseInput(c, &in.RequestCommon, &in, domain.Admin3DFilesAction); err != nil {
+			return nil
+		}
+		out := d.Admin3DFiles(&in)
+		return in.ToFiberCtx(c, out, &out.ResponseCommon, in)
+	})
+
 	// AdminAccessLogs
 	fw.Post("/"+domain.AdminAccessLogsAction, func(c *fiber.Ctx) error {
 		in := domain.AdminAccessLogsIn{}
@@ -27,6 +37,16 @@ func ApiRoutes(fw *fiber.App, d *domain.Domain) {
 			return nil
 		}
 		out := d.AdminDashboard(&in)
+		return in.ToFiberCtx(c, out, &out.ResponseCommon, in)
+	})
+
+	// AdminFeedbacks
+	fw.Post("/"+domain.AdminFeedbacksAction, func(c *fiber.Ctx) error {
+		in := domain.AdminFeedbacksIn{}
+		if err := webApiParseInput(c, &in.RequestCommon, &in, domain.AdminFeedbacksAction); err != nil {
+			return nil
+		}
+		out := d.AdminFeedbacks(&in)
 		return in.ToFiberCtx(c, out, &out.ResponseCommon, in)
 	})
 
@@ -60,6 +80,16 @@ func ApiRoutes(fw *fiber.App, d *domain.Domain) {
 		return in.ToFiberCtx(c, out, &out.ResponseCommon, in)
 	})
 
+	// AdminPropertiesTW
+	fw.Post("/"+domain.AdminPropertiesTWAction, func(c *fiber.Ctx) error {
+		in := domain.AdminPropertiesTWIn{}
+		if err := webApiParseInput(c, &in.RequestCommon, &in, domain.AdminPropertiesTWAction); err != nil {
+			return nil
+		}
+		out := d.AdminPropertiesTW(&in)
+		return in.ToFiberCtx(c, out, &out.ResponseCommon, in)
+	})
+
 	// AdminPropertiesUS
 	fw.Post("/"+domain.AdminPropertiesUSAction, func(c *fiber.Ctx) error {
 		in := domain.AdminPropertiesUSIn{}
@@ -67,6 +97,16 @@ func ApiRoutes(fw *fiber.App, d *domain.Domain) {
 			return nil
 		}
 		out := d.AdminPropertiesUS(&in)
+		return in.ToFiberCtx(c, out, &out.ResponseCommon, in)
+	})
+
+	// AdminRevenue
+	fw.Post("/"+domain.AdminRevenueAction, func(c *fiber.Ctx) error {
+		in := domain.AdminRevenueIn{}
+		if err := webApiParseInput(c, &in.RequestCommon, &in, domain.AdminRevenueAction); err != nil {
+			return nil
+		}
+		out := d.AdminRevenue(&in)
 		return in.ToFiberCtx(c, out, &out.ResponseCommon, in)
 	})
 
@@ -150,6 +190,26 @@ func ApiRoutes(fw *fiber.App, d *domain.Domain) {
 		return in.ToFiberCtx(c, out, &out.ResponseCommon, in)
 	})
 
+	// GuestOauthCallbackRedirect
+	fw.Post("/"+domain.GuestOauthCallbackRedirectAction, func(c *fiber.Ctx) error {
+		in := domain.GuestOauthCallbackRedirectIn{}
+		if err := webApiParseInput(c, &in.RequestCommon, &in, domain.GuestOauthCallbackRedirectAction); err != nil {
+			return nil
+		}
+		out := d.GuestOauthCallbackRedirect(&in)
+		return in.ToFiberCtx(c, out, &out.ResponseCommon, in)
+	})
+
+	// GuestOauthTokenExchange
+	fw.Post("/"+domain.GuestOauthTokenExchangeAction, func(c *fiber.Ctx) error {
+		in := domain.GuestOauthTokenExchangeIn{}
+		if err := webApiParseInput(c, &in.RequestCommon, &in, domain.GuestOauthTokenExchangeAction); err != nil {
+			return nil
+		}
+		out := d.GuestOauthTokenExchange(&in)
+		return in.ToFiberCtx(c, out, &out.ResponseCommon, in)
+	})
+
 	// GuestProperty
 	fw.Post("/"+domain.GuestPropertyAction, func(c *fiber.Ctx) error {
 		in := domain.GuestPropertyIn{}
@@ -200,6 +260,16 @@ func ApiRoutes(fw *fiber.App, d *domain.Domain) {
 		return in.ToFiberCtx(c, out, &out.ResponseCommon, in)
 	})
 
+	// RealtorDeleteProperty
+	fw.Post("/"+domain.RealtorDeletePropertyAction, func(c *fiber.Ctx) error {
+		in := domain.RealtorDeletePropertyIn{}
+		if err := webApiParseInput(c, &in.RequestCommon, &in, domain.RealtorDeletePropertyAction); err != nil {
+			return nil
+		}
+		out := d.RealtorDeleteProperty(&in)
+		return in.ToFiberCtx(c, out, &out.ResponseCommon, in)
+	})
+
 	// RealtorOwnedProperties
 	fw.Post("/"+domain.RealtorOwnedPropertiesAction, func(c *fiber.Ctx) error {
 		in := domain.RealtorOwnedPropertiesIn{}
@@ -220,6 +290,16 @@ func ApiRoutes(fw *fiber.App, d *domain.Domain) {
 		return in.ToFiberCtx(c, out, &out.ResponseCommon, in)
 	})
 
+	// RealtorRevenue
+	fw.Post("/"+domain.RealtorRevenueAction, func(c *fiber.Ctx) error {
+		in := domain.RealtorRevenueIn{}
+		if err := webApiParseInput(c, &in.RequestCommon, &in, domain.RealtorRevenueAction); err != nil {
+			return nil
+		}
+		out := d.RealtorRevenue(&in)
+		return in.ToFiberCtx(c, out, &out.ResponseCommon, in)
+	})
+
 	// RealtorUpsertProperty
 	fw.Post("/"+domain.RealtorUpsertPropertyAction, func(c *fiber.Ctx) error {
 		in := domain.RealtorUpsertPropertyIn{}
@@ -237,6 +317,16 @@ func ApiRoutes(fw *fiber.App, d *domain.Domain) {
 			return nil
 		}
 		out := d.UserAutoLoginLink(&in)
+		return in.ToFiberCtx(c, out, &out.ResponseCommon, in)
+	})
+
+	// UserBuyers
+	fw.Post("/"+domain.UserBuyersAction, func(c *fiber.Ctx) error {
+		in := domain.UserBuyersIn{}
+		if err := webApiParseInput(c, &in.RequestCommon, &in, domain.UserBuyersAction); err != nil {
+			return nil
+		}
+		out := d.UserBuyers(&in)
 		return in.ToFiberCtx(c, out, &out.ResponseCommon, in)
 	})
 
@@ -277,6 +367,26 @@ func ApiRoutes(fw *fiber.App, d *domain.Domain) {
 			return nil
 		}
 		out := d.UserLikeProp(&in)
+		return in.ToFiberCtx(c, out, &out.ResponseCommon, in)
+	})
+
+	// UserListing
+	fw.Post("/"+domain.UserListingAction, func(c *fiber.Ctx) error {
+		in := domain.UserListingIn{}
+		if err := webApiParseInput(c, &in.RequestCommon, &in, domain.UserListingAction); err != nil {
+			return nil
+		}
+		out := d.UserListing(&in)
+		return in.ToFiberCtx(c, out, &out.ResponseCommon, in)
+	})
+
+	// UserListings
+	fw.Post("/"+domain.UserListingsAction, func(c *fiber.Ctx) error {
+		in := domain.UserListingsIn{}
+		if err := webApiParseInput(c, &in.RequestCommon, &in, domain.UserListingsAction); err != nil {
+			return nil
+		}
+		out := d.UserListings(&in)
 		return in.ToFiberCtx(c, out, &out.ResponseCommon, in)
 	})
 
@@ -340,6 +450,26 @@ func ApiRoutes(fw *fiber.App, d *domain.Domain) {
 		return in.ToFiberCtx(c, out, &out.ResponseCommon, in)
 	})
 
+	// UserSearchPropUS
+	fw.Post("/"+domain.UserSearchPropUSAction, func(c *fiber.Ctx) error {
+		in := domain.UserSearchPropUSIn{}
+		if err := webApiParseInput(c, &in.RequestCommon, &in, domain.UserSearchPropUSAction); err != nil {
+			return nil
+		}
+		out := d.UserSearchPropUS(&in)
+		return in.ToFiberCtx(c, out, &out.ResponseCommon, in)
+	})
+
+	// UserSendFeedback
+	fw.Post("/"+domain.UserSendFeedbackAction, func(c *fiber.Ctx) error {
+		in := domain.UserSendFeedbackIn{}
+		if err := webApiParseInput(c, &in.RequestCommon, &in, domain.UserSendFeedbackAction); err != nil {
+			return nil
+		}
+		out := d.UserSendFeedback(&in)
+		return in.ToFiberCtx(c, out, &out.ResponseCommon, in)
+	})
+
 	// UserSessionKill
 	fw.Post("/"+domain.UserSessionKillAction, func(c *fiber.Ctx) error {
 		in := domain.UserSessionKillIn{}
@@ -370,6 +500,16 @@ func ApiRoutes(fw *fiber.App, d *domain.Domain) {
 		return in.ToFiberCtx(c, out, &out.ResponseCommon, in)
 	})
 
+	// UserUpload3DFile
+	fw.Post("/"+domain.UserUpload3DFileAction, func(c *fiber.Ctx) error {
+		in := domain.UserUpload3DFileIn{}
+		if err := webApiParseInput(c, &in.RequestCommon, &in, domain.UserUpload3DFileAction); err != nil {
+			return nil
+		}
+		out := d.UserUpload3DFile(&in)
+		return in.ToFiberCtx(c, out, &out.ResponseCommon, in)
+	})
+
 	// UserUploadFile
 	fw.Post("/"+domain.UserUploadFileAction, func(c *fiber.Ctx) error {
 		in := domain.UserUploadFileIn{}
@@ -377,6 +517,16 @@ func ApiRoutes(fw *fiber.App, d *domain.Domain) {
 			return nil
 		}
 		out := d.UserUploadFile(&in)
+		return in.ToFiberCtx(c, out, &out.ResponseCommon, in)
+	})
+
+	// UserViewRoom
+	fw.Post("/"+domain.UserViewRoomAction, func(c *fiber.Ctx) error {
+		in := domain.UserViewRoomIn{}
+		if err := webApiParseInput(c, &in.RequestCommon, &in, domain.UserViewRoomAction); err != nil {
+			return nil
+		}
+		out := d.UserViewRoom(&in)
 		return in.ToFiberCtx(c, out, &out.ResponseCommon, in)
 	})
 

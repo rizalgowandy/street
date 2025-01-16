@@ -1,11 +1,12 @@
 
 setup:
 	go get -u -v github.com/kokizzu/gotro@latest
-	go install github.com/cosmtrek/air@latest
+	go install github.com/air-verse/air@latest
 	go install github.com/fatih/gomodifytags@latest
 	go install github.com/kokizzu/replacer@latest
 	go install github.com/akbarfa49/farify@latest
 	go install golang.org/x/tools/cmd/goimports@latest
+	#curl -fsSL https://get.pnpm.io/install.sh | bash -
 	curl -fsSL https://bun.sh/install | bash
 
 local-tarantool:
@@ -21,11 +22,11 @@ local-clickhouse:
 	# SELECT * FROM "actionLogs" LIMIT 1;
 
 modtidy:
-	sudo chmod -R a+rwx tmpdb && go mod tidy
+	sudo chmod -R a+rwx _tmpdb && go mod tidy
 
 fixtags:
 	# fix struct tags
-	go generate street/domain
+	go generate domain
 
 orm:
 	# generate ORM

@@ -1,5 +1,4 @@
 <script>
-  // @ts-nocheck
   import { UserSearchProp } from '../jsApi.GEN';
   import { onMount } from 'svelte';
 
@@ -8,7 +7,6 @@
   onMount(async () => {
     console.log('onMount.RandomProperty')
     await UserSearchProp({}, async res => {
-      console.log(res);
       props = res.properties;
     });
   });

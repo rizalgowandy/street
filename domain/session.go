@@ -29,6 +29,8 @@ type Session struct {
 	ExpiredAt int64 // in seconds
 	Email     string
 
+	Country string
+
 	// not saved but retrieved from SUPERADMIN_EMAILS env
 	IsSuperAdmin bool
 
@@ -75,7 +77,7 @@ func createHash(key1, key2 string) string {
 		byte(res.Hi >> (64 - 40) % x),
 		byte(res.Hi >> (64 - 48) % x),
 		byte(res.Hi >> (64 - 56) % x),
-		byte(res.Hi >> (64 - 64) % x), // nolint: staticcheck
+		byte(res.Hi % x),
 		byte(res.Lo >> (64 - 8) % x),
 		byte(res.Lo >> (64 - 16) % x),
 		byte(res.Lo >> (64 - 24) % x),
@@ -83,7 +85,7 @@ func createHash(key1, key2 string) string {
 		byte(res.Lo >> (64 - 40) % x),
 		byte(res.Lo >> (64 - 48) % x),
 		byte(res.Lo >> (64 - 56) % x),
-		byte(res.Lo >> (64 - 64) % x), // nolint: staticcheck
+		byte(res.Lo % x),
 	})
 }
 
@@ -191,6 +193,8 @@ const (
 	ErrSegmentNotAllowed = `session segment not allowed`
 
 	ErrSessionUserNotSuperAdmin = `session email is not superadmin`
+
+	UserNotFound = `User not found`
 )
 
 func (d *Domain) MustLogin(in RequestCommon, out *ResponseCommon) (res *Session) {
@@ -217,6 +221,16 @@ func (d *Domain) MustLogin(in RequestCommon, out *ResponseCommon) (res *Session)
 
 	session := rqAuth.NewSessions(d.AuthOltp)
 	session.SessionToken = in.SessionToken
+
+	loggedUser := rqAuth.NewUsers(d.AuthOltp)
+	loggedUser.Id = sess.UserId
+	if !loggedUser.FindById() {
+		out.SetError(400, UserNotFound)
+		return nil
+	}
+
+	sess.Country = loggedUser.Country
+
 	if !session.FindBySessionToken() {
 		out.SetError(498, ErrSessionTokenNotFound)
 		return nil
